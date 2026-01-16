@@ -3,10 +3,20 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
 
+const props = defineProps({
+  formatPrice: Function,
+  currency: String
+})
+
 const router = useRouter()
 
 // State
 const watches = ref([])
+const featuredWatch = computed(() => {
+  if (watches.value.length === 0) return null
+  // Just take the first one as featured for now or one with flag
+  return watches.value[0]
+})
 const totalWatches = ref(0)
 const totalBrands = ref(0)
 const avgPrice = ref(0)
@@ -162,10 +172,7 @@ const downloadPDF = async (watchIds) => {
   }
 }
 
-// Format price
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('fr-FR').format(price)
-}
+// Note: local formatPrice removed to use props.formatPrice
 
 // Reset filters
 const resetFilters = () => {
@@ -329,11 +336,30 @@ onMounted(() => {
       <div class="hero-content">
         <h1 class="hero-title italic">Garde-Temps</h1>
         <p class="hero-subtitle">Manufacture • Excellence • Héritage</p>
-        <a href="#collection" class="hero-cta" @click.prevent="$el.querySelector('.stats-section').scrollIntoView({ behavior: 'smooth' })">
-          Explorer la Collection
-        </a>
+        <div class="hero-actions">
+          <a href="#collection" class="hero-cta" @click.prevent="$el.querySelector('.main-content').scrollIntoView({ behavior: 'smooth' })">
+            Explorer la Collection
+          </a>
+        </div>
       </div>
       <div class="scroll-indicator"></div>
+    </section>
+
+    <!-- Featured Spotlight -->
+    <section v-if="featuredWatch" class="featured-spotlight reveal">
+      <div class="container grid-2">
+        <div class="spotlight-image">
+          <div class="badge-featured">Sélection du mois</div>
+          <img :src="featuredWatch.image_url" :alt="featuredWatch.model_name">
+        </div>
+        <div class="spotlight-info">
+          <span class="label-prestige">{{ featuredWatch.brand_name }}</span>
+          <h2 class="spotlight-title">{{ featuredWatch.model_name }}</h2>
+          <p class="spotlight-desc">{{ featuredWatch.description }}</p>
+          <div class="spotlight-price">{{ props.formatPrice(featuredWatch.price) }}</div>
+          <button class="btn-primary-luxury" @click="goToDetail(featuredWatch.id)">Détails Exclusifs</button>
+        </div>
+      </div>
     </section>
 
     <!-- Stats Section -->
@@ -342,15 +368,15 @@ onMounted(() => {
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value">{{ animatedStats.watches }}</div>
-            <div class="stat-label">Montres de Prestige</div>
+            <div class="stat-label">Garde-Temps Unique</div>
           </div>
           <div class="stat-card">
             <div class="stat-value">{{ animatedStats.brands }}</div>
-            <div class="stat-label">Manufactures</div>
+            <div class="stat-label">Manufactures Partenaires</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ formatPrice(animatedStats.price) }} €</div>
-            <div class="stat-label">Valeur Moyenne</div>
+            <div class="stat-value">{{ props.formatPrice(animatedStats.price) }}</div>
+            <div class="stat-label">Investissement Moyen</div>
           </div>
         </div>
       </div>
@@ -361,9 +387,12 @@ onMounted(() => {
       <div class="container">
         <h2 class="section-title">Notre Collection</h2>
         
-        <div v-if="loading" class="loading">
-          <div class="spinner"></div>
-          <p>Chargement des garde-temps...</p>
+        <div v-if="loading" class="watches-grid">
+          <div v-for="i in 6" :key="i" class="skeleton-card">
+            <div class="skeleton-img shimmer"></div>
+            <div class="skeleton-text shimmer"></div>
+            <div class="skeleton-text shimmer short"></div>
+          </div>
         </div>
 
         <div v-else class="watches-grid">
@@ -402,12 +431,10 @@ onMounted(() => {
               <div class="watch-brand">{{ watch.brand_name }} • {{ watch.brand_country }}</div>
               <h3 class="watch-model">{{ watch.model_name }}</h3>
               <div class="watch-details">
-                <div class="watch-detail-item">⚙️ <span>{{ watch.movement_display }}</span></div>
-                <div class="watch-detail-item">📏 <span>{{ watch.case_diameter }}mm</span></div>
-                <div class="watch-detail-item">💎 <span>{{ watch.material_display }}</span></div>
+                <div class="watch-detail-item"><span>{{ watch.movement_display }}</span></div>
+                <div class="watch-detail-item"><span>{{ watch.case_diameter }}mm</span></div>
               </div>
-              <div class="watch-price">{{ formatPrice(watch.price) }} €</div>
-              <div class="watch-reference">Réf. {{ watch.reference_number }}</div>
+              <div class="watch-price">{{ props.formatPrice(watch.price) }}</div>
             </div>
           </div>
         </div>
@@ -471,7 +498,7 @@ onMounted(() => {
               <tr>
                 <td>Prix</td>
                 <td v-for="watch in comparisonList" :key="watch.id" class="price-val">
-                  {{ formatPrice(watch.price) }} €
+                  {{ props.formatPrice(watch.price) }}
                 </td>
               </tr>
               <tr>
@@ -595,24 +622,30 @@ onMounted(() => {
   background: var(--secondary);
   border: 1px solid var(--border);
   color: var(--accent-gold);
-  width: 55px;
-  height: 55px;
-  border-radius: 0; /* Luxury labels are often square or sharp */
+  width: 60px;
+  height: 60px;
+  border-radius: 0;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
   transition: all 0.4s ease;
   box-shadow: none;
   position: relative;
+  padding: 0;
+}
+
+.filters-toggle {
+  flex-direction: column;
+  gap: 5px;
 }
 
 .wishlist-toggle {
   background: var(--accent-gold);
   color: var(--primary);
   border: none;
+  font-size: 1.6rem;
+  padding-top: 4px; /* Adjusting for the heart character's baseline offset */
 }
 
 .wishlist-toggle .badge {
@@ -640,7 +673,7 @@ onMounted(() => {
 .filters-toggle span {
   width: 25px;
   height: 2px;
-  background: var(--primary);
+  background: var(--accent-gold); /* Gold instead of primary (dark) */
   transition: all 0.3s ease;
 }
 
@@ -717,6 +750,143 @@ onMounted(() => {
 .btn-export-pdf:hover {
   background: var(--accent-gold);
   color: var(--primary);
+}
+
+/* Featured Spotlight */
+.featured-spotlight {
+  padding: 8rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 6rem;
+}
+
+.spotlight-image {
+  position: relative;
+  background: var(--bg-card);
+  padding: 4rem;
+  border: 1px solid var(--border);
+}
+
+.spotlight-image img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.badge-featured {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  background: var(--accent-gold);
+  color: var(--primary);
+  padding: 0.5rem 1.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+}
+
+.label-prestige {
+  color: var(--accent-gold);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.spotlight-title {
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  font-weight: 400;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+}
+
+.spotlight-desc {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: 3rem;
+  font-size: 1.1rem;
+}
+
+.spotlight-price {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  color: var(--accent-gold);
+  margin-bottom: 3rem;
+}
+
+.btn-primary-luxury {
+  background: var(--accent-gold);
+  color: var(--primary);
+  border: none;
+  padding: 1.5rem 4rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-primary-luxury:hover {
+  background: #fff;
+}
+
+/* Skeletons */
+.skeleton-card {
+  height: 450px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 2rem;
+}
+
+.skeleton-img {
+  height: 250px;
+  background: rgba(255,255,255,0.05);
+  margin-bottom: 2rem;
+}
+
+.skeleton-text {
+  height: 20px;
+  background: rgba(255,255,255,0.05);
+  margin-bottom: 1rem;
+}
+
+.skeleton-text.short {
+  width: 60%;
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  to { left: 100%; }
+}
+
+@media (max-width: 1024px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
 }
 
 .filters-grid {
@@ -958,8 +1128,8 @@ onMounted(() => {
 
 .watches-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 3rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
   margin-bottom: 4rem;
 }
 
@@ -1001,7 +1171,7 @@ onMounted(() => {
 
 .watch-image {
   width: 100%;
-  height: 350px;
+  height: 280px;
   background: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(10, 10, 15, 0.9) 100%);
   display: flex;
   align-items: center;
@@ -1049,35 +1219,35 @@ onMounted(() => {
 }
 
 .watch-info {
-  padding: 2rem;
+  padding: 1.5rem;
   position: relative;
   z-index: 2;
 }
 
 .watch-brand {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--accent-rose);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .watch-model {
   font-family: var(--font-display);
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   line-height: 1.3;
 }
 
 .watch-details {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem 0;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 0;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }

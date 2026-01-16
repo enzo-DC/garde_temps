@@ -36,6 +36,34 @@ const animateCursor = () => {
   rafId = requestAnimationFrame(animateCursor)
 }
 
+const currency = ref(localStorage.getItem('currency') || 'EUR')
+const exchangeRates = {
+  EUR: 1,
+  USD: 1.08,
+  CHF: 0.94
+}
+const currencySymbols = {
+  EUR: '€',
+  USD: '$',
+  CHF: 'CHF'
+}
+
+const formatPrice = (price) => {
+  const rate = exchangeRates[currency.value]
+  const converted = price * rate
+  const symbol = currencySymbols[currency.value]
+  
+  if (currency.value === 'CHF') {
+    return new Intl.NumberFormat('fr-CH').format(Math.round(converted)) + ' ' + symbol
+  }
+  return symbol + ' ' + new Intl.NumberFormat(currency.value === 'USD' ? 'en-US' : 'fr-FR').format(Math.round(converted))
+}
+
+const changeCurrency = (newCurrency) => {
+  currency.value = newCurrency
+  localStorage.setItem('currency', newCurrency)
+}
+
 onMounted(() => {
   window.addEventListener('mousemove', updateCursor)
   animateCursor()
@@ -63,7 +91,27 @@ onUnmounted(() => {
 
     <ThreeBackground />
 
-    <RouterView />
+    <!-- Global Header / Currency Switcher -->
+    <header class="global-navbar">
+      <div class="nav-left">
+        <div class="currency-selector">
+          <button 
+            v-for="curr in ['EUR', 'USD', 'CHF']" 
+            :key="curr"
+            :class="{ active: currency === curr }"
+            @click="changeCurrency(curr)"
+          >
+            {{ curr }}
+          </button>
+        </div>
+      </div>
+      <div class="nav-brand" @click="router.push('/')">GARDE-TEMPS</div>
+      <div class="nav-right">
+        <!-- Optional: Account, Searchicon etc -->
+      </div>
+    </header>
+
+    <RouterView :formatPrice="formatPrice" :currency="currency" />
   </div>
 </template>
 
@@ -107,6 +155,59 @@ body {
 
 #app {
   min-height: 100vh;
+}
+
+/* Global Navbar */
+.global-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rem;
+  z-index: 1000;
+  background: rgba(5, 5, 5, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.3em;
+  color: var(--accent-gold);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.currency-selector {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.currency-selector button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid transparent;
+}
+
+.currency-selector button:hover, .currency-selector button.active {
+  color: var(--accent-gold);
+}
+
+.currency-selector button.active {
+  border-bottom: 1px solid var(--accent-gold);
 }
 
 /* Custom Cursor Styles */

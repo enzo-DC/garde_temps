@@ -3,6 +3,11 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../services/api'
 
+const props = defineProps({
+  formatPrice: Function,
+  currency: String
+})
+
 const route = useRoute()
 const router = useRouter()
 const watch = ref(null)
@@ -33,9 +38,7 @@ const toggleWishlist = (id) => {
 
 const isInWishlist = (id) => wishlist.value.includes(id)
 
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('fr-FR').format(price)
-}
+// Local formatPrice removed
 
 const goBack = () => {
   router.push('/')
@@ -82,10 +85,11 @@ onMounted(() => {
         </div>
 
         <div class="watch-details-section">
-          <div class="brand-badge">{{ watch.brand_name }} • {{ watch.brand_country }}</div>
-          <h1 class="watch-title">{{ watch.model_name }}</h1>
-          <div class="watch-price-large">{{ formatPrice(watch.price) }} €</div>
-          
+            <div class="watch-brand">{{ watch.brand_name }}</div>
+            <h1 class="watch-title">{{ watch.model_name }}</h1>
+            <div class="watch-price">{{ props.formatPrice(watch.price) }}</div>
+            
+            <p class="watch-description">{{ watch.description }}</p>
           <div class="watch-meta">
             <div class="meta-item">
               Réf. <span>{{ watch.reference_number }}</span>
@@ -136,8 +140,8 @@ onMounted(() => {
 <style scoped>
 .watch-detail {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
-  padding: 2rem 0;
+  background: transparent;
+  padding: 120px 0 2rem;
 }
 
 .container {

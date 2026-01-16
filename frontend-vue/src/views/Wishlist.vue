@@ -3,6 +3,11 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
 
+const props = defineProps({
+  formatPrice: Function,
+  currency: String
+})
+
 const router = useRouter()
 const watches = ref([])
 const loading = ref(true)
@@ -28,9 +33,7 @@ const loadWishlist = async () => {
   }
 }
 
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('fr-FR').format(price)
-}
+// Local formatPrice removed
 
 const removeFromWishlist = (id, event) => {
   event.stopPropagation()
@@ -137,7 +140,7 @@ onMounted(() => {
           <div class="watch-info">
             <div class="watch-brand">{{ watch.brand_name }}</div>
             <h3 class="watch-model">{{ watch.model_name }}</h3>
-            <div class="watch-price">{{ formatPrice(watch.price) }} €</div>
+            <div class="watch-price">{{ props.formatPrice(watch.price) }}</div>
             <div class="watch-meta">
               <span>📏 {{ watch.case_diameter }}mm</span>
               <span>⚙️ {{ watch.movement_display }}</span>
@@ -152,7 +155,7 @@ onMounted(() => {
 <style scoped>
 .wishlist-page {
   min-height: 100vh;
-  padding: 4rem 0;
+  padding: 120px 0 4rem; /* Added top padding to account for fixed navbar */
   position: relative;
 }
 
