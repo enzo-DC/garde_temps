@@ -16,6 +16,26 @@ const totalPages = ref(1)
 const showFilters = ref(false)
 const comparisonList = ref([])
 const showComparisonModal = ref(false)
+const wishlist = ref(JSON.parse(localStorage.getItem('wishlist') || '[]'))
+const animatedStats = ref({
+  watches: 0,
+  brands: 0,
+  price: 0
+})
+
+// Wishlist logic
+const toggleWishlist = (id, event) => {
+  event.stopPropagation()
+  const index = wishlist.value.indexOf(id)
+  if (index === -1) {
+    wishlist.value.push(id)
+  } else {
+    wishlist.value.splice(index, 1)
+  }
+  localStorage.setItem('wishlist', JSON.stringify(wishlist.value))
+}
+
+const isInWishlist = (id) => wishlist.value.includes(id)
 
 // Comparison logic
 const toggleComparison = (watch, event) => {
@@ -75,13 +95,29 @@ const loadWatches = async () => {
     watches.value = response.data.results
     totalPages.value = Math.ceil(response.data.count / 12)
     loading.value = false
+    
+    // Initialize reveal animations after data loads
+    setTimeout(initReveal, 100)
   } catch (error) {
     console.error('Error loading watches:', error)
     loading.value = false
   }
 }
 
-// Load stats
+// Load stats with animation
+const animateValue = (refKey, start, end, duration) => {
+  let startTimestamp = null
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1)
+    animatedStats.value[refKey] = Math.floor(progress * (end - start) + start)
+    if (progress < 1) {
+      window.requestAnimationFrame(step)
+    }
+  }
+  window.requestAnimationFrame(step)
+}
+
 const loadStats = async () => {
   try {
     const [watchesRes, brandsRes] = await Promise.all([
@@ -92,12 +128,37 @@ const loadStats = async () => {
     totalWatches.value = watchesRes.data.count
     totalBrands.value = brandsRes.data.count
     
+    let targetPrice = 0
     if (watchesRes.data.results.length > 0) {
       const sum = watchesRes.data.results.reduce((acc, w) => acc + parseFloat(w.price), 0)
-      avgPrice.value = Math.round(sum / watchesRes.data.results.length)
+      targetPrice = Math.round(sum / watchesRes.data.results.length)
+      avgPrice.value = targetPrice
     }
+
+    // Animate stats
+    animateValue('watches', 0, totalWatches.value, 2000)
+    animateValue('brands', 0, totalBrands.value, 2000)
+    animateValue('price', 0, targetPrice, 2000)
+    
   } catch (error) {
     console.error('Error loading stats:', error)
+  }
+}
+
+// PDF Export
+const downloadPDF = async (watchIds) => {
+  try {
+    const response = await api.exportPDF(watchIds)
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'catalogue_garde_temps.pdf')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch (error) {
+    console.error('Error downloading PDF:', error)
+    alert('Erreur lors de la génération du PDF.')
   }
 }
 
@@ -137,19 +198,52 @@ const goToDetail = (id) => {
   router.push(`/watch/${id}`)
 }
 
+// Scroll reveal
+const initReveal = () => {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('reveal-active')
+      }
+    })
+  }, { threshold: 0.1 })
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+}
+
+// 3D Tilt Effect
+const handleTilt = (e, card) => {
+  const rect = e.currentTarget.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  
+  const centerX = rect.width / 2
+  const centerY = rect.height / 2
+  
+  const rotateX = (y - centerY) / 15
+  const rotateY = (centerX - x) / 15
+  
+  e.currentTarget.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
+}
+
+const resetTilt = (e) => {
+  e.currentTarget.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`
+}
+
 onMounted(() => {
   loadWatches()
   loadStats()
+  initReveal()
 })
 </script>
 
 <template>
   <div class="home">
     <!-- Animated Background -->
-    <div class="animated-bg"></div>
+    <!-- <div class="animated-bg"></div> -->
     
     <!-- Particles -->
-    <div class="particles">
+    <!-- <div class="particles">
       <div v-for="i in 30" :key="i" class="particle" 
            :style="{
              left: Math.random() * 100 + '%',
@@ -157,14 +251,21 @@ onMounted(() => {
              animationDelay: Math.random() * 20 + 's',
              animationDuration: (15 + Math.random() * 10) + 's'
            }"></div>
-    </div>
+    </div> -->
 
-    <!-- Filters Toggle -->
-    <button class="filters-toggle" :class="{ active: showFilters }" @click="showFilters = !showFilters">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
+    <!-- Navigation Buttons -->
+    <div class="nav-floating">
+      <button class="wishlist-toggle" @click="router.push('/wishlist')" title="Ma Liste de Souhaits">
+        ♥
+        <span v-if="wishlist.length" class="badge">{{ wishlist.length }}</span>
+      </button>
+      
+      <button class="filters-toggle" :class="{ active: showFilters }" @click="showFilters = !showFilters">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
 
     <!-- Filters Sidebar -->
     <aside class="filters-sidebar" :class="{ active: showFilters }">
@@ -236,20 +337,20 @@ onMounted(() => {
     </section>
 
     <!-- Stats Section -->
-    <section class="stats-section">
+    <section class="stats-section reveal">
       <div class="container">
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-value">{{ totalWatches }}</div>
-            <div class="stat-label">Montres</div>
+            <div class="stat-value">{{ animatedStats.watches }}</div>
+            <div class="stat-label">Montres de Prestige</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ totalBrands }}</div>
-            <div class="stat-label">Marques</div>
+            <div class="stat-value">{{ animatedStats.brands }}</div>
+            <div class="stat-label">Manufactures</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ formatPrice(avgPrice) }} €</div>
-            <div class="stat-label">Prix Moyen</div>
+            <div class="stat-value">{{ formatPrice(animatedStats.price) }} €</div>
+            <div class="stat-label">Valeur Moyenne</div>
           </div>
         </div>
       </div>
@@ -267,11 +368,13 @@ onMounted(() => {
 
         <div v-else class="watches-grid">
           <div v-for="(watch, index) in watches" :key="watch.id" 
-               class="watch-card" 
+               class="watch-card reveal" 
                @click="goToDetail(watch.id)"
-               :style="{ animationDelay: index * 0.1 + 's' }">
+               @mousemove="handleTilt($event, watch)"
+               @mouseleave="resetTilt($event)"
+               :style="{ transitionDelay: index * 0.05 + 's' }">
             <div class="watch-image">
-              <img v-if="watch.image_url" :src="watch.image_url" :alt="watch.model_name" class="watch-photo">
+              <img v-if="watch.image_url" :src="watch.image_url" :alt="watch.model_name" class="watch-photo" loading="lazy">
               <div v-else class="watch-icon">⌚</div>
               
               <!-- Comparison Toggle -->
@@ -283,6 +386,16 @@ onMounted(() => {
               >
                 <span v-if="isCompared(watch.id)">✓</span>
                 <span v-else>+</span>
+              </button>
+
+              <!-- Wishlist Toggle -->
+              <button 
+                class="wishlist-btn" 
+                :class="{ active: isInWishlist(watch.id) }"
+                @click="toggleWishlist(watch.id, $event)"
+                title="Ajouter aux favoris"
+              >
+                ♥
               </button>
             </div>
             <div class="watch-info">
@@ -332,7 +445,12 @@ onMounted(() => {
     <div v-if="showComparisonModal" class="comparison-modal" @click="showComparisonModal = false">
       <div class="comparison-content" @click.stopPropagation>
         <button class="modal-close" @click="showComparisonModal = false">×</button>
-        <h2 class="modal-title">Comparatif Haute Horlogerie</h2>
+        <div class="modal-header-flex">
+          <h2 class="modal-title">Comparatif Haute Horlogerie</h2>
+          <button class="btn-export-pdf" @click="downloadPDF(comparisonList.map(w => w.id))">
+            📄 Exporter en PDF
+          </button>
+        </div>
         
         <div class="comparison-table-wrapper">
           <table class="comparison-table">
@@ -462,12 +580,18 @@ onMounted(() => {
   padding: 0 2rem;
 }
 
-/* Filters Toggle */
-.filters-toggle {
+/* Navigation Floating */
+.nav-floating {
   position: fixed;
   top: 2rem;
   right: 2rem;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.filters-toggle, .wishlist-toggle {
   background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-rose) 100%);
   border: none;
   width: 60px;
@@ -481,9 +605,34 @@ onMounted(() => {
   gap: 5px;
   transition: all 0.3s ease;
   box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
+  position: relative;
 }
 
-.filters-toggle:hover {
+.wishlist-toggle {
+  background: white;
+  color: #ff4757;
+  font-size: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.wishlist-toggle .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4757;
+  color: white;
+  font-size: 0.7rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid white;
+}
+
+.filters-toggle:hover, .wishlist-toggle:hover {
   transform: scale(1.1);
   box-shadow: 0 15px 40px rgba(212, 175, 55, 0.6);
 }
@@ -534,6 +683,40 @@ onMounted(() => {
   color: var(--accent-gold);
   margin-bottom: 2rem;
   font-weight: 300;
+}
+
+.filters-sidebar .modal-title {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  color: var(--accent-gold);
+  margin-bottom: 0;
+}
+
+.modal-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-right: 3rem;
+}
+
+.btn-export-pdf {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  padding: 0.8rem 1.5rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+}
+
+.btn-export-pdf:hover {
+  background: var(--accent-gold);
+  color: var(--primary);
 }
 
 .filters-grid {
@@ -1256,7 +1439,69 @@ onMounted(() => {
     justify-content: center;
   }
 }
-/* Pagination */
+/* Reveal Animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Wishlist Button */
+.wishlist-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(10, 10, 15, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.wishlist-btn:hover {
+  transform: scale(1.1);
+  color: #ff4757;
+}
+
+.wishlist-btn.active {
+  color: #ff4757;
+  background: rgba(255, 71, 87, 0.1);
+  border-color: #ff4757;
+}
+
+/* Card Improvements */
+.watch-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: border-color 0.5s, box-shadow 0.5s;
+  cursor: pointer;
+  position: relative;
+}
+
+.watch-info {
+  transform: translateZ(20px);
+}
+
+/* Pagination Improvements */
 .pagination {
   display: flex;
   justify-content: center;
@@ -1298,20 +1543,21 @@ onMounted(() => {
   letter-spacing: 0.1em;
 }
 
-/* Footer */
+/* Footer Improvements */
 .footer {
   background: rgba(10, 10, 15, 0.95);
   backdrop-filter: blur(20px);
-  padding: 3rem 0;
+  padding: 5rem 0;
   text-align: center;
-  margin-top: 4rem;
+  margin-top: 8rem;
   border-top: 1px solid var(--border);
 }
 
 .footer p {
   color: var(--text-muted);
-  font-size: 0.85rem;
-  letter-spacing: 0.15em;
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 /* Responsive */
@@ -1327,6 +1573,10 @@ onMounted(() => {
   .filters-sidebar {
     width: 100%;
     right: -100%;
+  }
+
+  .watch-card {
+    transform: none !important; /* Disable tilt on mobile */
   }
 }
 </style>

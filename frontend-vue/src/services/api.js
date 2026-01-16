@@ -27,5 +27,12 @@ export default {
     // Complications
     getComplications() {
         return api.get('/complications/')
+    },
+
+    // PDF Export
+    exportPDF(watchIds) {
+        return api.post('/watches/export-pdf/', { watch_ids: watchIds }, {
+            responseType: 'blob'
+        })
     }
 }

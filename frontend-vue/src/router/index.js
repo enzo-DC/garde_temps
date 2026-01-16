@@ -14,6 +14,11 @@ const router = createRouter({
             path: '/watch/:id',
             name: 'watch-detail',
             component: WatchDetail
+        },
+        {
+            path: '/wishlist',
+            name: 'wishlist',
+            component: () => import('../views/Wishlist.vue')
         }
     ]
 })

@@ -8,6 +8,8 @@ const router = useRouter()
 const watch = ref(null)
 const loading = ref(true)
 
+const wishlist = ref(JSON.parse(localStorage.getItem('wishlist') || '[]'))
+
 const loadWatch = async () => {
   try {
     const response = await api.getWatch(route.params.id)
@@ -18,6 +20,18 @@ const loadWatch = async () => {
     loading.value = false
   }
 }
+
+const toggleWishlist = (id) => {
+  const index = wishlist.value.indexOf(id)
+  if (index === -1) {
+    wishlist.value.push(id)
+  } else {
+    wishlist.value.splice(index, 1)
+  }
+  localStorage.setItem('wishlist', JSON.stringify(wishlist.value))
+}
+
+const isInWishlist = (id) => wishlist.value.includes(id)
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('fr-FR').format(price)
@@ -40,6 +54,23 @@ onMounted(() => {
     </div>
 
     <div v-else-if="watch" class="container">
+      <!-- Navigation Buttons -->
+      <div class="nav-floating">
+        <button class="wishlist-link-btn" @click="router.push('/wishlist')" title="Ma Liste de Souhaits">
+          ♥
+          <span v-if="wishlist.length" class="badge">{{ wishlist.length }}</span>
+        </button>
+        
+        <button 
+          class="wishlist-toggle-btn" 
+          :class="{ active: isInWishlist(watch.id) }"
+          @click="toggleWishlist(watch.id)"
+          title="Ajouter aux favoris"
+        >
+          {{ isInWishlist(watch.id) ? '❤️' : '🤍' }}
+        </button>
+      </div>
+
       <button @click="goBack" class="back-link">← Retour au Catalogue</button>
 
       <div class="detail-container">
@@ -381,6 +412,70 @@ onMounted(() => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Navigation Floating */
+.nav-floating {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.wishlist-link-btn, .wishlist-toggle-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  border: none;
+  font-size: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.wishlist-link-btn {
+  background: white;
+  color: #ff4757;
+}
+
+.wishlist-toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  font-size: 1.2rem;
+}
+
+.wishlist-toggle-btn.active {
+  background: rgba(255, 71, 87, 0.1);
+  border-color: #ff4757;
+}
+
+.wishlist-link-btn .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4757;
+  color: white;
+  font-size: 0.7rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid white;
+}
+
+.wishlist-link-btn:hover, .wishlist-toggle-btn:hover {
+  transform: scale(1.1);
 }
 
 @media (max-width: 1024px) {
