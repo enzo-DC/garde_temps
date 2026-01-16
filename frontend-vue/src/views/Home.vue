@@ -924,9 +924,9 @@ onMounted(() => {
 .filter-select, .filter-input {
   width: 100%;
   padding: 1rem 1.5rem;
-  background: rgba(26, 26, 46, 0.8);
+  background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 50px;
+  border-radius: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.9rem;
@@ -936,8 +936,8 @@ onMounted(() => {
 .filter-select:focus, .filter-input:focus {
   outline: none;
   border-color: var(--accent-gold);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-  background: rgba(26, 26, 46, 1);
+  box-shadow: 0 0 20px rgba(197, 160, 89, 0.2);
+  background: var(--secondary);
 }
 
 .btn-reset {
@@ -977,7 +977,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 15, 0.8) 100%);
+  background: var(--overlay-gradient);
   z-index: 1;
 }
 
@@ -1109,7 +1109,7 @@ onMounted(() => {
 .stat-card:hover {
   transform: translateY(-10px);
   border-color: var(--accent-gold);
-  box-shadow: 0 20px 60px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 20px 60px rgba(197, 160, 89, 0.2);
 }
 
 .stat-value {
@@ -1182,13 +1182,13 @@ onMounted(() => {
 .watch-card:hover {
   transform: translateY(-15px) scale(1.02);
   border-color: var(--accent-gold);
-  box-shadow: 0 30px 80px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 30px 80px rgba(197, 160, 89, 0.2);
 }
 
 .watch-image {
   width: 100%;
   height: 280px;
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(10, 10, 15, 0.9) 100%);
+  background: var(--secondary);
   display: flex;
   align-items: center;
   justify-content: center;

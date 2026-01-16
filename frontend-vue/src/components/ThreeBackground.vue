@@ -121,6 +121,7 @@ onUnmounted(() => {
   height: 100%;
   z-index: -1; /* Right behind the content */
   pointer-events: none;
-  background: #05050a;
+  background: var(--primary);
+  transition: background 0.8s ease;
 }
 </style>

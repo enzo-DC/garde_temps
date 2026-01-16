@@ -405,7 +405,7 @@ onMounted(() => {
 }
 
 .complication-badge {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(183, 110, 121, 0.2) 100%);
+  background: var(--bg-card);
   padding: 1rem 2rem;
   border-radius: 50px;
   border: 1px solid var(--border);
@@ -416,7 +416,7 @@ onMounted(() => {
 
 .complication-badge:hover {
   border-color: var(--accent-gold);
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(183, 110, 121, 0.3) 100%);
+  background: var(--secondary);
   transform: translateY(-3px);
 }
 
@@ -476,9 +476,10 @@ onMounted(() => {
 }
 
 .wishlist-toggle-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
+  color: var(--text-primary);
   font-size: 1.2rem;
 }
 

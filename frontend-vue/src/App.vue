@@ -64,9 +64,26 @@ const changeCurrency = (newCurrency) => {
   localStorage.setItem('currency', newCurrency)
 }
 
+const isDarkMode = ref(localStorage.getItem('theme') !== 'light')
+
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value
+  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
+  updateThemeClass()
+}
+
+const updateThemeClass = () => {
+  if (isDarkMode.value) {
+    document.documentElement.classList.remove('light-mode')
+  } else {
+    document.documentElement.classList.add('light-mode')
+  }
+}
+
 onMounted(() => {
   window.addEventListener('mousemove', updateCursor)
   animateCursor()
+  updateThemeClass()
 })
 
 onUnmounted(() => {
@@ -104,10 +121,15 @@ onUnmounted(() => {
             {{ curr }}
           </button>
         </div>
+        <div class="nav-divider"></div>
+        <button class="theme-toggle" @click="toggleTheme" :title="isDarkMode ? 'Mode Clair' : 'Mode Sombre'">
+          <span v-if="isDarkMode">☀️</span>
+          <span v-else>🌙</span>
+        </button>
       </div>
       <div class="nav-brand" @click="router.push('/')">GARDE-TEMPS</div>
       <div class="nav-right">
-        <!-- Optional: Account, Searchicon etc -->
+        <!-- Espacement pour équilibre -->
       </div>
     </header>
 
@@ -128,14 +150,31 @@ onUnmounted(() => {
   --secondary: #0d0d0d;
   --accent-gold: #c5a059; /* Muted Champagne Gold */
   --accent-brass: #8e7341;
+  --accent-rose: #ff4757;
   --text-primary: #f5f5f5;
   --text-secondary: #a0a0a0;
   --text-muted: #555555;
   --bg-card: rgba(15, 15, 15, 0.85);
   --border: rgba(197, 160, 89, 0.15);
+  --navbar-bg: rgba(5, 5, 5, 0.8);
+  --overlay-gradient: linear-gradient(180deg, transparent 0%, rgba(5, 5, 5, 0.8) 100%);
   --font-display: 'Playfair Display', serif;
   --font-body: 'Inter', sans-serif;
   --transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root.light-mode {
+  --primary: #f8f6f2; /* Soft Paper/Cream */
+  --secondary: #ffffff;
+  --accent-gold: #b08e4d;
+  --accent-brass: #8e7341;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #888888;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --border: rgba(176, 142, 77, 0.2);
+  --navbar-bg: rgba(248, 246, 242, 0.8);
+  --overlay-gradient: linear-gradient(180deg, transparent 0%, rgba(248, 246, 242, 0.8) 100%);
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@200;300;400;500;600&display=swap');
@@ -169,18 +208,30 @@ body {
   justify-content: space-between;
   padding: 0 4rem;
   z-index: 1000;
-  background: rgba(5, 5, 5, 0.8);
+  background: var(--navbar-bg);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
 
+.nav-left, .nav-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.nav-right {
+  justify-content: flex-end;
+}
+
 .nav-brand {
+  flex: 0 0 auto;
   font-family: var(--font-display);
   font-size: 1.5rem;
   letter-spacing: 0.3em;
   color: var(--accent-gold);
   cursor: pointer;
   font-weight: 600;
+  text-align: center;
 }
 
 .currency-selector {
@@ -208,6 +259,31 @@ body {
 
 .currency-selector button.active {
   border-bottom: 1px solid var(--accent-gold);
+}
+
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 1.5rem;
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 1rem;
+  opacity: 0.6;
+}
+
+.theme-toggle:hover {
+  opacity: 1;
+  transform: rotate(15deg);
 }
 
 /* Custom Cursor Styles */

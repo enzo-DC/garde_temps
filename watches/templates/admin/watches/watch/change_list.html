@@ -10,11 +10,21 @@
         gap: 20px;
     }
 
-    .admin-dashboard-row {
+    .admin-dashboard-sidebar {
+        width: 400px;
         display: flex;
-        gap: 30px;
-        margin-bottom: 30px;
-        align-items: flex-start;
+        flex-direction: column;
+        gap: 25px;
+        margin-top: 60px;
+        transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+
+    .admin-dashboard-sidebar.hidden {
+        width: 0;
+        margin-left: -25px;
+        opacity: 0;
+        pointer-events: none;
     }
 
     .admin-chart-container {
@@ -23,11 +33,11 @@
         border-radius: 12px;
         padding: 25px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         transition: transform 0.3s ease;
+        min-width: 350px;
     }
 
     .admin-chart-container:hover {
@@ -40,54 +50,86 @@
         height: auto;
     }
 
-    .changelist-content-wrapper {
-        display: flex;
-        gap: 20px;
-        width: 100%;
+    .dashboard-toggle-container {
+        position: absolute;
+        top: 20px;
+        right: 0;
+        z-index: 100;
     }
 
-    #changelist {
-        flex: 1;
-        background: transparent !important;
-        border: none !important;
+    .btn-toggle-dashboard {
+        background: transparent;
+        border: 1px solid #c5a059;
+        color: #c5a059;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 11px;
+        transition: all 0.3s;
     }
 
-    /* Style adjustment for the original list */
-    .results {
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #333 !important;
+    .btn-toggle-dashboard:hover {
+        background: #c5a059;
+        color: #000;
     }
 
-    #changelist-filter {
-        background: #1a1a1a !important;
-        border: 1px solid #333 !important;
-        border-radius: 12px !important;
-        margin-left: 20px !important;
+    /* Support for Light Mode if admin has it */
+    body.light-mode .admin-chart-container {
+        background: #fff;
+        border-color: #ddd;
     }
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('dashboard-sidebar');
+        const toggleBtn = document.getElementById('toggle-dashboard');
+        
+        // Restore state
+        const isHidden = localStorage.getItem('admin_dashboard_hidden') === 'true';
+        if (isHidden) {
+            sidebar.classList.add('hidden');
+            toggleBtn.innerText = '📊 Afficher Analyses';
+        }
+
+        toggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('hidden');
+            const nowHidden = sidebar.classList.contains('hidden');
+            localStorage.setItem('admin_dashboard_hidden', nowHidden);
+            toggleBtn.innerText = nowHidden ? '📊 Afficher Analyses' : '📊 Masquer Analyses';
+        });
+    });
+</script>
 {% endblock %}
 
 {% block content %}
-<div style="display: flex; align-items: flex-start; gap: 25px;">
-    <!-- Liste Originale (Partie gauche) -->
-    <div style="flex: 1; min-width: 0;">
-        {{ block.super }}
+<div style="position: relative;">
+    <div class="dashboard-toggle-container">
+        <button id="toggle-dashboard" class="btn-toggle-dashboard">📊 Masquer Analyses</button>
     </div>
+    
+    <div style="display: flex; align-items: flex-start; gap: 25px;">
+        <!-- Liste Originale (Partie gauche) -->
+        <div style="flex: 1; min-width: 0;">
+            {{ block.super }}
+        </div>
 
-    <!-- Dashboards (Partie droite) -->
-    <div style="width: 400px; display: flex; flex-direction: column; gap: 25px; margin-top: 40px;">
-        {% if movement_chart %}
-        <div class="admin-chart-container">
-            <img src="data:image/png;base64,{{ movement_chart }}" class="admin-chart-img" alt="Movement Chart">
+        <!-- Dashboards (Partie droite) -->
+        <div id="dashboard-sidebar" class="admin-dashboard-sidebar">
+            {% if movement_chart %}
+            <div class="admin-chart-container">
+                <img src="data:image/png;base64,{{ movement_chart }}" class="admin-chart-img" alt="Movement Chart">
+            </div>
+            {% endif %}
+            
+            {% if price_chart %}
+            <div class="admin-chart-container">
+                <img src="data:image/png;base64,{{ price_chart }}" class="admin-chart-img" alt="Price Chart">
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
-        
-        {% if price_chart %}
-        <div class="admin-chart-container">
-            <img src="data:image/png;base64,{{ price_chart }}" class="admin-chart-img" alt="Price Chart">
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
