@@ -25,43 +25,45 @@ const init = () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   container.value.appendChild(renderer.domElement)
 
-  // Torus Knot Geometry (More complex and impressive)
-  const geometry = new THREE.TorusKnotGeometry(10, 0.1, 100, 16)
+  // Subtle Wireframe Sphere (Like an armillary sphere or movement part)
+  const geometry = new THREE.SphereGeometry(4, 32, 32)
   const material = new THREE.MeshStandardMaterial({ 
-    color: 0xd4af37, 
-    metalness: 1,
-    roughness: 0.2,
+    color: 0xc5a059, 
+    wireframe: true,
+    transparent: true,
+    opacity: 0.1
   })
-  torus = new THREE.Mesh(geometry, material)
+  torus = new THREE.Mesh(geometry, material) // Keeping variable name 'torus' for compatibility
   scene.add(torus)
 
-  // Particles
+  // Champagne Dust Particles
   const particlesGeometry = new THREE.BufferGeometry()
-  const particlesCount = 2000
+  const particlesCount = 800
   const posArray = new Float32Array(particlesCount * 3)
 
   for(let i = 0; i < particlesCount * 3; i++) {
-    posArray[i] = (Math.random() - 0.5) * 40
+    posArray[i] = (Math.random() - 0.5) * 20
   }
 
   particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
   const particlesMaterial = new THREE.PointsMaterial({
-    size: 0.02,
-    color: 0xd4af37,
+    size: 0.015,
+    color: 0xc5a059,
     transparent: true,
-    opacity: 0.6
+    opacity: 0.4,
+    blending: THREE.AdditiveBlending
   })
 
   particles = new THREE.Points(particlesGeometry, particlesMaterial)
   scene.add(particles)
 
-  // Lighting
-  const mainLight = new THREE.DirectionalLight(0xffffff, 2)
-  mainLight.position.set(1, 1, 2)
-  scene.add(mainLight)
-  
-  const ambientLight = new THREE.AmbientLight(0x404040, 1)
+  // Soft Lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.2)
   scene.add(ambientLight)
+
+  const light1 = new THREE.PointLight(0xc5a059, 1)
+  light1.position.set(10, 10, 10)
+  scene.add(light1)
 
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('resize', onResize)
@@ -78,17 +80,17 @@ const onResize = () => {
 const animate = () => {
   requestAnimationFrame(animate)
 
-  targetX = mouseX * 0.0005
-  targetY = mouseY * 0.0005
+  targetX = mouseX * 0.0002
+  targetY = mouseY * 0.0002
 
-  torus.rotation.y += 0.005
-  torus.rotation.z += 0.002
+  // Ultra slow, elegant rotation
+  torus.rotation.y += 0.001
+  torus.rotation.z += 0.0005
   
-  // Smooth mouse follow
-  scene.rotation.x += (targetY - scene.rotation.x) * 0.05
-  scene.rotation.y += (targetX - scene.rotation.y) * 0.05
+  scene.rotation.x += (targetY - scene.rotation.x) * 0.02
+  scene.rotation.y += (targetX - scene.rotation.y) * 0.02
 
-  particles.rotation.y += 0.0005
+  particles.rotation.y += 0.0002
 
   renderer.render(scene, camera)
 }

@@ -327,10 +327,10 @@ onMounted(() => {
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <h1 class="hero-title">Garde-Temps</h1>
-        <p class="hero-subtitle">Collection Exclusive de Montres de Prestige</p>
+        <h1 class="hero-title italic">Garde-Temps</h1>
+        <p class="hero-subtitle">Manufacture • Excellence • Héritage</p>
         <a href="#collection" class="hero-cta" @click.prevent="$el.querySelector('.stats-section').scrollIntoView({ behavior: 'smooth' })">
-          Découvrir la Collection
+          Explorer la Collection
         </a>
       </div>
       <div class="scroll-indicator"></div>
@@ -592,27 +592,27 @@ onMounted(() => {
 }
 
 .filters-toggle, .wishlist-toggle {
-  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-rose) 100%);
-  border: none;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  color: var(--accent-gold);
+  width: 55px;
+  height: 55px;
+  border-radius: 0; /* Luxury labels are often square or sharp */
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
+  transition: all 0.4s ease;
+  box-shadow: none;
   position: relative;
 }
 
 .wishlist-toggle {
-  background: white;
-  color: #ff4757;
-  font-size: 1.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: var(--accent-gold);
+  color: var(--primary);
+  border: none;
 }
 
 .wishlist-toggle .badge {
@@ -803,62 +803,51 @@ onMounted(() => {
 
 .hero-title {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 8vw, 7rem);
-  font-weight: 300;
+  font-size: clamp(4rem, 10vw, 9rem);
+  font-weight: 400;
   color: var(--accent-gold);
-  margin-bottom: 1rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  animation: fadeInUp 1s ease-out;
-  text-shadow: 0 0 40px rgba(212, 175, 55, 0.5);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  animation: fadeInUp 1.2s ease-out;
+  text-shadow: none;
+}
+
+.hero-title.italic {
+  font-style: italic;
 }
 
 .hero-subtitle {
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  font-weight: 200;
-  letter-spacing: 0.3em;
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.5em;
   text-transform: uppercase;
-  margin-bottom: 3rem;
-  animation: fadeInUp 1s ease-out 0.2s both;
-  color: var(--text-secondary);
+  margin-bottom: 3.5rem;
+  animation: fadeInUp 1.2s ease-out 0.2s both;
+  color: var(--accent-gold);
+  opacity: 0.8;
 }
 
 .hero-cta {
   display: inline-block;
-  padding: 1.5rem 4rem;
-  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-rose) 100%);
-  color: var(--primary);
+  padding: 1.2rem 3.5rem;
+  background: transparent;
+  color: var(--accent-gold);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  border-radius: 50px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeInUp 1s ease-out 0.4s both;
-  box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
-  position: relative;
-  overflow: hidden;
+  border: 1px solid var(--accent-gold);
+  border-radius: 0;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fadeInUp 1.2s ease-out 0.4s both;
   cursor: pointer;
 }
 
-.hero-cta::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
-}
-
-.hero-cta:hover::before {
-  left: 100%;
-}
-
 .hero-cta:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 50px rgba(212, 175, 55, 0.5);
+  background: var(--accent-gold);
+  color: var(--primary);
+  transform: translateY(-2px);
 }
 
 @keyframes fadeInUp {
@@ -1488,13 +1477,17 @@ onMounted(() => {
   transform-style: preserve-3d;
   will-change: transform;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  border-radius: 0;
   overflow: hidden;
   border: 1px solid var(--border);
-  transition: border-color 0.5s, box-shadow 0.5s;
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   position: relative;
+}
+
+.watch-card:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
 }
 
 .watch-info {

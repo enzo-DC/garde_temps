@@ -76,21 +76,21 @@ onUnmounted(() => {
 }
 
 :root {
-  --primary: #0a0a0f;
-  --secondary: #1a1a2e;
-  --accent-gold: #d4af37;
-  --accent-rose: #b76e79;
-  --text-primary: #ffffff;
-  --text-secondary: #c4c4c4;
-  --text-muted: #808080;
-  --bg-card: rgba(26, 26, 46, 0.6);
-  --border: rgba(212, 175, 55, 0.2);
-  --font-display: 'Cormorant Garamond', serif;
-  --font-body: 'Montserrat', sans-serif;
-  --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --primary: #050505;
+  --secondary: #0d0d0d;
+  --accent-gold: #c5a059; /* Muted Champagne Gold */
+  --accent-brass: #8e7341;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a0a0a0;
+  --text-muted: #555555;
+  --bg-card: rgba(15, 15, 15, 0.85);
+  --border: rgba(197, 160, 89, 0.15);
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  --transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@200;300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@200;300;400;500;600&display=swap');
 
 html {
   scroll-behavior: smooth;
@@ -162,8 +162,8 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(var(--accent-gold), var(--accent-rose));
-  border-radius: 5px;
+  background: var(--accent-gold);
+  border-radius: 0;
 }
 
 @media (max-width: 1024px) {
