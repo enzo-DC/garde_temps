@@ -156,7 +156,7 @@ const loadStats = async () => {
 }
 
 // PDF Export
-const downloadPDF = async (watchIds) => {
+const downloadCatalogPDF = async (watchIds) => {
   try {
     const response = await api.exportPDF(watchIds)
     const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -169,6 +169,22 @@ const downloadPDF = async (watchIds) => {
   } catch (error) {
     console.error('Error downloading PDF:', error)
     alert('Erreur lors de la génération du PDF.')
+  }
+}
+
+const downloadComparisonPDF = async (watchIds) => {
+  try {
+    const response = await api.exportComparisonPDF(watchIds)
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'comparatif_garde_temps.pdf')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch (error) {
+    console.error('Error downloading comparison PDF:', error)
+    alert('Erreur lors de la génération du comparatif PDF.')
   }
 }
 
@@ -474,7 +490,7 @@ onMounted(() => {
         <button class="modal-close" @click="showComparisonModal = false">×</button>
         <div class="modal-header-flex">
           <h2 class="modal-title">Comparatif Haute Horlogerie</h2>
-          <button class="btn-export-pdf" @click="downloadPDF(comparisonList.map(w => w.id))">
+          <button class="btn-export-pdf" @click="downloadComparisonPDF(comparisonList.map(w => w.id))">
             📄 Exporter en PDF
           </button>
         </div>
@@ -1339,17 +1355,17 @@ onMounted(() => {
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(10, 10, 15, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
-  border-radius: 50px;
-  padding: 1rem 2rem;
+  background: var(--primary);
+  backdrop-filter: blur(30px);
+  border: 1px solid var(--accent-gold);
+  border-radius: 100px;
+  padding: 0.75rem 0.75rem 0.75rem 2rem;
   display: flex;
   align-items: center;
-  gap: 2rem;
-  z-index: 900;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-  animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 3rem;
+  z-index: 2000;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8), 0 0 40px rgba(197, 160, 89, 0.2);
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slideUp {
@@ -1419,21 +1435,24 @@ onMounted(() => {
 }
 
 .btn-compare-now {
-  padding: 0.8rem 2rem;
-  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-rose) 100%);
+  padding: 1rem 3rem;
+  background: var(--accent-gold);
   border: none;
-  border-radius: 50px;
+  border-radius: 100px;
   color: var(--primary);
   font-weight: 700;
   cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  transition: all 0.3s;
+  letter-spacing: 0.2em;
+  font-size: 0.85rem;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 30px rgba(197, 160, 89, 0.3);
 }
 
 .btn-compare-now:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(212, 175, 55, 0.4);
+  background: #fff;
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 .btn-clear-comp {

@@ -44,6 +44,24 @@ const goBack = () => {
   router.push('/')
 }
 
+const downloadPDF = async () => {
+  if (!watch.value) return
+  
+  try {
+    const response = await api.exportPDF([watch.value.id])
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `fiche_${watch.value.model_name.replace(/\s+/g, '_')}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch (error) {
+    console.error('Error downloading PDF:', error)
+    alert('Erreur lors de la génération du PDF.')
+  }
+}
+
 onMounted(() => {
   loadWatch()
 })
@@ -130,6 +148,14 @@ onMounted(() => {
                 {{ complication.name }}
               </div>
             </div>
+          </div>
+          <div class="watch-actions">
+            <button class="btn-primary-luxury" @click="toggleWishlist(watch.id)">
+              {{ isInWishlist(watch.id) ? 'Retirer des favoris' : 'Ajouter aux favoris' }}
+            </button>
+            <button class="btn-secondary-luxury" @click="downloadPDF">
+              📥 Télécharger la Fiche PDF
+            </button>
           </div>
         </div>
       </div>
@@ -499,6 +525,55 @@ onMounted(() => {
 
   .specs-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+.watch-actions {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--border);
+}
+
+.btn-primary-luxury {
+  background: var(--accent-gold);
+  color: var(--primary);
+  border: none;
+  padding: 1.5rem 2.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: var(--transition);
+  flex: 1;
+}
+
+.btn-primary-luxury:hover {
+  background: #fff;
+}
+
+.btn-secondary-luxury {
+  background: transparent;
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+  padding: 1.5rem 2.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: var(--transition);
+  flex: 1;
+}
+
+.btn-secondary-luxury:hover {
+  background: var(--accent-gold);
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .watch-actions {
+    flex-direction: column;
   }
 }
 </style>

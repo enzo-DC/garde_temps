@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
 
@@ -12,6 +12,10 @@ const router = useRouter()
 const watches = ref([])
 const loading = ref(true)
 const wishlist = ref(JSON.parse(localStorage.getItem('wishlist') || '[]'))
+
+const totalValue = computed(() => {
+  return watches.value.reduce((acc, w) => acc + parseFloat(w.price), 0)
+})
 
 const loadWishlist = async () => {
   if (wishlist.value.length === 0) {
@@ -71,7 +75,7 @@ const downloadPDF = async () => {
   if (wishlist.value.length === 0) return
   
   try {
-    const response = await api.exportPDF(wishlist.value)
+    const response = await api.exportWishlistPDF(wishlist.value)
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
@@ -97,11 +101,23 @@ onMounted(() => {
     <div class="container">
       <header class="wishlist-header">
         <button @click="goBack" class="btn-back">← Retour</button>
-        <h1 class="page-title">Mes Coups de Cœur</h1>
+        <h1 class="page-title italic">Mes Coups de Cœur</h1>
+        
+        <div class="wishlist-summary-bar" v-if="watches.length">
+          <div class="summary-item">
+            <span class="summary-label">Collection</span>
+            <span class="summary-value">{{ watches.length }} pièces</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-item">
+            <span class="summary-label">Valeur Totale Est.</span>
+            <span class="summary-value">{{ props.formatPrice(totalValue) }}</span>
+          </div>
+        </div>
+
         <div class="header-actions" v-if="watches.length">
-          <p class="page-count">{{ watches.length }} garde-temps sélectionnés</p>
           <button class="btn-export-wishlist" @click="downloadPDF">
-            📄 Exporter ma liste en PDF
+            📄 Exporter ma sélection
           </button>
         </div>
       </header>
@@ -140,11 +156,11 @@ onMounted(() => {
           <div class="watch-info">
             <div class="watch-brand">{{ watch.brand_name }}</div>
             <h3 class="watch-model">{{ watch.model_name }}</h3>
-            <div class="watch-price">{{ props.formatPrice(watch.price) }}</div>
-            <div class="watch-meta">
-              <span>📏 {{ watch.case_diameter }}mm</span>
-              <span>⚙️ {{ watch.movement_display }}</span>
+            <div class="watch-details">
+              <div class="watch-detail-item"><span>{{ watch.movement_display }}</span></div>
+              <div class="watch-detail-item"><span>{{ watch.case_diameter }}mm</span></div>
             </div>
+            <div class="watch-price">{{ props.formatPrice(watch.price) }}</div>
           </div>
         </div>
       </div>
@@ -215,33 +231,63 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-.header-actions {
+.wishlist-summary-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 3rem;
+  padding: 1.5rem 4rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+.summary-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+.summary-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--text-muted);
+}
+
+.summary-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--accent-gold);
+}
+
+.summary-divider {
+  width: 1px;
+  height: 30px;
+  background: var(--border);
+}
+
+.header-actions {
+  margin-top: 3rem;
 }
 
 .btn-export-wishlist {
-  background: rgba(212, 175, 55, 0.1);
+  background: transparent;
   border: 1px solid var(--accent-gold);
   color: var(--accent-gold);
-  padding: 1rem 2rem;
-  border-radius: 50px;
+  padding: 1.2rem 3rem;
+  border-radius: 0;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  font-size: 0.8rem;
 }
 
 .btn-export-wishlist:hover {
   background: var(--accent-gold);
   color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
 }
 
 /* Grid */
@@ -253,18 +299,22 @@ onMounted(() => {
 
 .watch-card {
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  border-radius: 0;
   border: 1px solid var(--border);
   overflow: hidden;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   position: relative;
 }
 
+.watch-card:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+}
+
 .watch-image {
-  height: 300px;
-  background: rgba(0,0,0,0.3);
+  height: 280px;
+  background: var(--secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -327,19 +377,26 @@ onMounted(() => {
 }
 
 .watch-price {
-  font-size: 1.8rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
   color: var(--accent-gold);
-  font-weight: 300;
-  margin-bottom: 1rem;
+  font-weight: 400;
+  margin-bottom: 0;
 }
 
-.watch-meta {
+.watch-details {
   display: flex;
-  gap: 1.5rem;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 0;
   border-top: 1px solid var(--border);
-  padding-top: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.watch-detail-item {
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 /* Empty State */

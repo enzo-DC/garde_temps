@@ -34,5 +34,17 @@ export default {
         return api.post('/watches/export-pdf/', { watch_ids: watchIds }, {
             responseType: 'blob'
         })
+    },
+
+    exportWishlistPDF(watchIds) {
+        return api.post('/watches/export-wishlist/', { watch_ids: watchIds }, {
+            responseType: 'blob'
+        })
+    },
+
+    exportComparisonPDF(watchIds) {
+        return api.post('/watches/export-comparison/', { watch_ids: watchIds }, {
+            responseType: 'blob'
+        })
     }
 }
