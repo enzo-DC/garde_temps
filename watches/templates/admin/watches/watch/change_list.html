@@ -1,0 +1,93 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    #content-main {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .admin-dashboard-row {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 30px;
+        align-items: flex-start;
+    }
+
+    .admin-chart-container {
+        background: #121212;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: transform 0.3s ease;
+    }
+
+    .admin-chart-container:hover {
+        transform: translateY(-5px);
+        border-color: #c5a059;
+    }
+
+    .admin-chart-img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .changelist-content-wrapper {
+        display: flex;
+        gap: 20px;
+        width: 100%;
+    }
+
+    #changelist {
+        flex: 1;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* Style adjustment for the original list */
+    .results {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #333 !important;
+    }
+
+    #changelist-filter {
+        background: #1a1a1a !important;
+        border: 1px solid #333 !important;
+        border-radius: 12px !important;
+        margin-left: 20px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; align-items: flex-start; gap: 25px;">
+    <!-- Liste Originale (Partie gauche) -->
+    <div style="flex: 1; min-width: 0;">
+        {{ block.super }}
+    </div>
+
+    <!-- Dashboards (Partie droite) -->
+    <div style="width: 400px; display: flex; flex-direction: column; gap: 25px; margin-top: 40px;">
+        {% if movement_chart %}
+        <div class="admin-chart-container">
+            <img src="data:image/png;base64,{{ movement_chart }}" class="admin-chart-img" alt="Movement Chart">
+        </div>
+        {% endif %}
+        
+        {% if price_chart %}
+        <div class="admin-chart-container">
+            <img src="data:image/png;base64,{{ price_chart }}" class="admin-chart-img" alt="Price Chart">
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

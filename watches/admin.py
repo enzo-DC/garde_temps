@@ -5,9 +5,11 @@ from django.utils.html import format_html
 from .models import Brand, Complication, Watch
 import json
 from io import BytesIO
+import base64
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+plt.style.use('dark_background') # Base style for all charts
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
@@ -242,69 +244,102 @@ class WatchAdmin(admin.ModelAdmin):
         response['Content-Disposition'] = 'attachment; filename="database_export.json"'
         return response
     export_database_json.short_description = "📦 Exporter la BDD en JSON"
-    
-    def show_movement_chart(self, request, queryset):
-        """Génère un graphique camembert de la répartition des mouvements"""
+
+    def _get_movement_chart_base64(self):
+        """Helper pour générer le graphique mouvement en base64"""
         movements = Watch.objects.values_list('movement_type', flat=True)
         movement_counts = {}
         for m in movements:
             movement_counts[m] = movement_counts.get(m, 0) + 1
         
         if not movement_counts:
-            return HttpResponse("Aucune donnée disponible", content_type='text/plain')
+            return None
         
         labels = [dict(Watch.MOVEMENT_CHOICES).get(k, k) for k in movement_counts.keys()]
         sizes = list(movement_counts.values())
-        colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']
+        # Palette Luxe: Or, Argent, Platine, Bronze
+        colors = ['#c5a059', '#a6a6a6', '#e5e4e2', '#cd7f32']
         
-        plt.figure(figsize=(10, 8))
-        plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
-        plt.title('Répartition des Types de Mouvements', fontsize=16, fontweight='bold')
-        plt.axis('equal')
+        fig, ax = plt.subplots(figsize=(5, 5))
+        fig.patch.set_facecolor('none') # Fond transparent
+        ax.set_facecolor('none')
+        
+        wedges, texts, autotexts = ax.pie(
+            sizes, labels=labels, autopct='%1.1f%%', 
+            startangle=90, colors=colors,
+            pctdistance=0.85, explode=[0.05]*len(sizes)
+        )
+        
+        # Donut effect
+        centre_circle = plt.Circle((0,0), 0.70, fc='#121212')
+        fig.gca().add_artist(centre_circle)
+        
+        plt.setp(autotexts, size=8, weight="bold", color="black")
+        plt.setp(texts, size=10, color="#c5a059")
+        
+        plt.title('DISTRIBUTION DES MOUVEMENTS', color='#c5a059', fontsize=12, fontweight='bold', pad=20)
         
         buffer = BytesIO()
-        plt.savefig(buffer, format='png', bbox_inches='tight', dpi=150)
-        buffer.seek(0)
-        plt.close()
-        
-        return HttpResponse(buffer, content_type='image/png')
-    show_movement_chart.short_description = "📊 Graphique: Répartition Mouvements"
-    
-    def show_price_chart(self, request, queryset):
-        """Génère un histogramme du prix moyen par marque"""
+        plt.savefig(buffer, format='png', bbox_inches='tight', transparent=True, dpi=100)
+        plt.close(fig)
+        return base64.b64encode(buffer.getvalue()).decode()
+
+    def _get_price_chart_base64(self):
+        """Helper pour générer le graphique prix moyen en base64"""
         from django.db.models import Avg
-        
         brand_prices = Brand.objects.annotate(
             avg_price=Avg('watches__price')
-        ).filter(avg_price__isnull=False).order_by('-avg_price')
+        ).filter(avg_price__isnull=False).order_by('-avg_price')[:5] # Top 5
         
         if not brand_prices:
-            return HttpResponse("Aucune donnée disponible", content_type='text/plain')
+            return None
         
         brands = [b.name for b in brand_prices]
         prices = [float(b.avg_price) for b in brand_prices]
         
-        plt.figure(figsize=(14, 8))
-        bars = plt.bar(brands, prices, color='#3498db', edgecolor='#2c3e50', linewidth=1.5)
+        fig, ax = plt.subplots(figsize=(6, 4))
+        fig.patch.set_facecolor('none')
+        ax.set_facecolor('none')
         
-        # Ajouter les valeurs sur les barres
+        bars = ax.bar(brands, prices, color='#c5a059', alpha=0.8, edgecolor='#a6a6a6')
+        
         for bar in bars:
             height = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2., height,
-                    f'{height:,.0f}€',
-                    ha='center', va='bottom', fontsize=10, fontweight='bold')
+            ax.text(bar.get_x() + bar.get_width()/2., height + 500,
+                    f'{int(height)}€', ha='center', va='bottom', color='#a6a6a6', fontsize=8)
+
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_color('#333')
+        ax.spines['bottom'].set_color('#333')
+        ax.tick_params(colors='#a6a6a6', labelsize=8)
         
-        plt.xlabel('Marque', fontsize=12, fontweight='bold')
-        plt.ylabel('Prix Moyen (€)', fontsize=12, fontweight='bold')
-        plt.title('Prix Moyen par Marque', fontsize=16, fontweight='bold')
-        plt.xticks(rotation=45, ha='right')
-        plt.grid(axis='y', alpha=0.3, linestyle='--')
+        plt.title('PRIX MOYEN PAR MARQUE', color='#c5a059', fontsize=12, fontweight='bold', pad=20)
+        
         plt.tight_layout()
-        
         buffer = BytesIO()
-        plt.savefig(buffer, format='png', bbox_inches='tight', dpi=150)
-        buffer.seek(0)
-        plt.close()
-        
-        return HttpResponse(buffer, content_type='image/png')
+        plt.savefig(buffer, format='png', bbox_inches='tight', transparent=True, dpi=100)
+        plt.close(fig)
+        return base64.b64encode(buffer.getvalue()).decode()
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['movement_chart'] = self._get_movement_chart_base64()
+        extra_context['price_chart'] = self._get_price_chart_base64()
+        return super().changelist_view(request, extra_context=extra_context)
+    
+    def show_movement_chart(self, request, queryset):
+        """Action pour afficher le graphique mouvement (version isolée)"""
+        chart_base64 = self._get_movement_chart_base64()
+        if not chart_base64:
+            return HttpResponse("Désolé, aucune donnée pour générer le graphique.")
+        return HttpResponse(base64.b64decode(chart_base64), content_type='image/png')
+    show_movement_chart.short_description = "📊 Graphique: Répartition Mouvements"
+    
+    def show_price_chart(self, request, queryset):
+        """Action pour afficher le graphique prix (version isolée)"""
+        chart_base64 = self._get_price_chart_base64()
+        if not chart_base64:
+            return HttpResponse("Désolé, aucune donnée pour générer le graphique.")
+        return HttpResponse(base64.b64decode(chart_base64), content_type='image/png')
     show_price_chart.short_description = "📊 Graphique: Prix Moyen par Marque"
