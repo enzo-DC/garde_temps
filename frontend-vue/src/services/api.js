@@ -1,0 +1,31 @@
+import axios from 'axios'
+
+const API_BASE_URL = 'http://localhost:8000/api'
+
+const api = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+})
+
+export default {
+    // Watches
+    getWatches(params = {}) {
+        return api.get('/watches/', { params })
+    },
+
+    getWatch(id) {
+        return api.get(`/watches/${id}/`)
+    },
+
+    // Brands
+    getBrands() {
+        return api.get('/brands/')
+    },
+
+    // Complications
+    getComplications() {
+        return api.get('/complications/')
+    }
+}
